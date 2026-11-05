@@ -1,0 +1,37 @@
+apiVersion: apps/v1                       # Versão da API
+kind: Deployment                          # Tipo do manifesto que será executado
+metadata:                                 #
+  name: mysql                             # Identificação unica do objeto
+spec:                                     # O que deve ter na especificação do objeto
+  selector:                               # Identificar quais pods pertencem a este deployment
+    matchLabels:                          # 
+      app: mysql                          # 
+  strategy:                               # Qual estratégia de atualização do deployment será utilizada
+    type: Recreate                        # Tipo Recreate: recriar os pods antigos antes de criar os novos
+  replicas: 1                             # Quantidade de pods que devem ser criados
+  template:                               # Modelo do pod a ser criado
+    metadata:                             # 
+      labels:                             # Qualquer pod criado por este deployment terá a label app=mysql
+        app: mysql                        # 
+    spec:                                 # O que deve ter na especificação do objeto
+      containers:                         # 
+      - image: mysql:9                    # Versão da imagem que será utilizada para criar o container
+        name: mysql                       # Nome do container
+        env:                              # Variáveis de ambiente
+        # - name: MYSQL_ROOT_PASSWORD       #
+        #   value: password                 #
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_ROOT_PASSWORD
+        ports:                            # Portas que o container irá expor
+        - containerPort: 3306             # 
+          name: mysql                     #
+        volumeMounts:                     # Montagem do volume no container
+        - name: mysql-persistent-storage  # Ponto de montagem do volume
+          mountPath: /var/lib/mysql       #
+      volumes:                            # Montagem do volume no pod
+      - name: mysql-persistent-storage    # Ponto de montagem do volume
+        persistentVolumeClaim:            # Persistent Volume Claim (PVC) que será utilizado para o volume
+          claimName: mysql-pv-claim       # Name do PVC que será utilizado para o volume

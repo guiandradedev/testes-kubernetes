@@ -1,0 +1,14 @@
+apiVersion: v1             # Versão da API
+kind: PersistentVolume     # Tipo do manifesto
+metadata:                  # 
+  name: mysql-pv-volume    # Identificação unica do objeto
+  labels:                  # Identificação do recurso
+    type: local            # 
+spec:                      # Especificação do objeto
+  storageClassName: manual # Define a storage class para o PV. Define o provisionador de armazenamento e a política de recuperação do volume.
+  capacity:                # Capacidade do volume
+    storage: 5Gi           # Em Gigabits 
+  accessModes:             # Modos de acesso
+    - ReadWriteOnce        # Permite que o volume seja montado como leitura e escrita por um único nó
+  hostPath:                # Fonte de armazenamento do volume, neste caso, um diretório no nó do cluster
+    path: "/mnt/data"      # Path onde será armazenado

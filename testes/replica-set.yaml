@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: frontend # identificação unica do objeto
+  labels: # tags para identificação do recurso
+    app: guestbook
+    tier: frontend
+spec: # o que deve ter na especificação do objeto
+  replicas: 3 # quantidade de pods que devem ser criados
+  selector: # quais pods o replicaset deve gerenciar
+    matchLabels: # os pods que tiverem essa label serão gerenciados pelo replicaset
+      tier: frontend 
+  template: # modelo do pod a ser criado
+    metadata:
+      labels:
+        tier: frontend
+    spec:
+      containers:
+      - name: php-redis
+        image: us-docker.pkg.dev/google-samples/containers/gke/gb-frontend:v5

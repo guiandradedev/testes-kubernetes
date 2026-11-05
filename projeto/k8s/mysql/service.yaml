@@ -1,0 +1,11 @@
+apiVersion: v1    #
+kind: Service     # Tipo de manifesto
+metadata:         #
+  name: mysql     # Identificação unica do objeto
+spec:             # Especificação do objeto
+  ports:          #
+  - port: 3306    # Porta de saída do serviço
+    targetPort: 3306 # Porta de destino do serviço
+  selector:       #
+    app: mysql    #
+  clusterIP: None # Serviço sem IP de cluster, utilizado para comunicação entre pods do mesmo serviço (não é exposto para fora do cluster)
