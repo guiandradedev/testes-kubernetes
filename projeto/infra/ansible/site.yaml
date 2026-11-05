@@ -1,0 +1,75 @@
+- name: Provisionar nó Kubernetes (minikube)
+  hosts: k8s
+  vars:
+    kubectl_version: "v1.31.0"
+    project_dir: /vagrant   # manifests (infra/k8s)
+    app_dir: /app           # código das aplicações (raiz do projeto, montado só na VM k8s)
+    images:
+      - { name: webserver, path: webserver }
+      # - { name: backend, path: backend }
+
+  tasks:
+    - name: Instalar Docker
+      become: true
+      apt:
+        name: [docker.io, curl, conntrack]
+        update_cache: true
+
+    - name: Adicionar vagrant ao grupo docker
+      become: true
+      user:
+        name: vagrant
+        groups: docker
+        append: true
+
+    - name: Recarregar sessão para valer o grupo docker
+      meta: reset_connection
+
+    - name: Instalar minikube
+      become: true
+      get_url:
+        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        dest: /usr/local/bin/minikube
+        mode: "0755"
+
+    - name: Instalar kubectl
+      become: true
+      get_url:
+        url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: "0755"
+
+    - name: Verificar se o minikube já está rodando
+      command: minikube status
+      register: mk_status
+      failed_when: false
+      changed_when: false
+
+    - name: Iniciar minikube
+      command: >
+        minikube start --driver=docker --cpus=2 --memory=3000
+        --ports=80:80 --ports=443:443
+      when: mk_status.rc != 0
+
+    - name: Habilitar Ingress NGINX
+      command: minikube addons enable ingress
+
+    # O webhook de validação do ingress só responde depois que o controlador sobe
+    - name: Aguardar controlador do Ingress NGINX
+      command: >
+        kubectl wait --namespace ingress-nginx --for=condition=ready pod
+        --selector=app.kubernetes.io/component=controller --timeout=300s
+      changed_when: false
+
+    - name: Build das imagens dentro do Docker do minikube
+      shell: |
+        eval $(minikube docker-env)
+        docker build -t {{ item.name }}:local {{ app_dir }}/{{ item.path }}
+      loop: "{{ images }}"
+
+    - name: Aplicar manifests
+      command: kubectl apply -R -f {{ project_dir }}/k8s
+
+    - name: Aguardar deployments
+      command: kubectl wait --for=condition=available deploy --all --all-namespaces --timeout=300s
+      changed_when: false
