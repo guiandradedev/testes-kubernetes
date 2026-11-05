@@ -3,10 +3,8 @@
   vars:
     kubectl_version: "v1.31.0"
     project_dir: /vagrant   # manifests (infra/k8s)
-    app_dir: /app           # código das aplicações (raiz do projeto, montado só na VM k8s)
-    images:
-      - { name: webserver, path: webserver }
-      # - { name: backend, path: backend }
+    images:                 # imagens publicadas pelo CI no Docker Hub
+      - guiiandradedev/learning-cloud:main
 
   tasks:
     - name: Instalar Docker
@@ -61,11 +59,10 @@
         --selector=app.kubernetes.io/component=controller --timeout=300s
       changed_when: false
 
-    - name: Build das imagens dentro do Docker do minikube
-      shell: |
-        eval $(minikube docker-env)
-        docker build -t {{ item.name }}:local {{ app_dir }}/{{ item.path }}
+    - name: Baixar imagens do Docker Hub para o minikube
+      command: minikube image pull {{ item }}
       loop: "{{ images }}"
+      changed_when: false
 
     - name: Aplicar manifests
       command: kubectl apply -R -f {{ project_dir }}/k8s

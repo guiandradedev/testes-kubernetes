@@ -14,8 +14,8 @@ spec:                                     # O que deve ter na especificação do
     spec:                                 # O que deve ter na especificação do pod
       containers:                         #
       - name: webserver                   # Nome do container
-        image: webserver:local            # Imagem buildada dentro do Docker do minikube pelo Ansible
-        imagePullPolicy: Never            # Usa a imagem local do minikube, sem tentar baixar do registry
+        image: guiiandradedev/learning-cloud:main  # Imagem publicada no Docker Hub pelo CI
+        imagePullPolicy: Always           # Sempre verifica o Docker Hub para pegar a versão mais recente da tag
         ports:                            # Portas que o container irá expor
         - containerPort: 8080             #
           name: http                      #
